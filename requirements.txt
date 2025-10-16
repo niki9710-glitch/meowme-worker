@@ -1,0 +1,4 @@
+fastapi==0.115.0
+uvicorn==0.30.5
+yt-dlp==2024.10.07
+requests==2.32.3
