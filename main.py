@@ -37,9 +37,8 @@ def upload_to_cloudinary(file_path: str, public_id: str | None, folder: str | No
     if resp.status_code != 200:
         raise HTTPException(status_code=400, detail=resp.text)
     return resp.json()
-
 @app.post("/ingest/youtube")
-def ingest_youtube(req: IngestReq):
+def ingest_youtube(req: IngestReq, compact: bool = True):
     if not (YOUTUBE_API_KEY and CLOUD_NAME and UPLOAD_PRESET):
         raise HTTPException(status_code=500, detail="Server misconfigured")
     if not yt_license_is_cc(req.videoId):
@@ -48,29 +47,37 @@ def ingest_youtube(req: IngestReq):
     tmpdir = tempfile.mkdtemp()
     try:
         yurl = f"https://www.youtube.com/watch?v={req.videoId}"
-        # scarica il miglior MP4
+        # Scarica una versione MP4 più "leggera" (<=720p) per velocità/stabilità
         file_out = os.path.join(tmpdir, "%(id)s.%(ext)s")
-        cmd = ["yt-dlp", "-f", "mp4", "-o", file_out, yurl]
+        cmd = ["yt-dlp", "-f", "mp4[height<=720]/mp4", "-o", file_out, yurl, "-q"]
         subprocess.check_call(cmd)
-        # trova il file scaricato
-        mp4 = None
-        for name in os.listdir(tmpdir):
-            if name.endswith(".mp4"):
-                mp4 = os.path.join(tmpdir, name)
-                break
+
+        # Trova il file
+        mp4 = next((os.path.join(tmpdir, n) for n in os.listdir(tmpdir) if n.endswith(".mp4")), None)
         if not mp4:
             raise HTTPException(status_code=400, detail="No MP4 produced")
 
-        # upload su Cloudinary
+        # Upload su Cloudinary
         cj = upload_to_cloudinary(mp4, req.public_id, req.folder)
-        return {
+
+        # --- RISPOSTA SLIM (solo i campi utili all'Action) ---
+        resp = {
             "status": "ok",
             "public_id": cj.get("public_id"),
             "secure_url": cj.get("secure_url"),
             "resource_type": cj.get("resource_type"),
             "duration": cj.get("duration"),
             "source": yurl,
-            "credits": "Original on YouTube (CC-BY). Include creator/channel name and URL in caption."
+            "credits": "Original on YouTube (CC-BY). Include creator/channel link in caption."
         }
+
+        if compact:
+            return resp
+        else:
+            # opzionale: aggiungi info extra ma MAI oggetti enormi
+            resp["width"] = cj.get("width")
+            resp["height"] = cj.get("height")
+            return resp
+
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
