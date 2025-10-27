@@ -16,7 +16,7 @@ FB_ACCOUNT_ID       = os.getenv("8852", "")
 FB_PAGE_ID          = os.getenv("814075715127747", "")
 YT_ACCOUNT_ID       = os.getenv("15639", "")
 TIKTOK_ACCOUNT_ID   = os.getenv("19002", "")
-OPENAI_API_KEY      = os.getenv("OPENAI_API_KEY", "")  # opzionale (migliore qualità)
+OPENAI_API_KEY      = os.getenv("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", "")  # opzionale (migliore qualità)
 SERVICE_ACCOUNT_JSON= os.getenv("{
   "type": "service_account",
   "project_id": "meowme-475220",
@@ -347,3 +347,4 @@ async def run_meowme(payload: RunPayload, authorization: str | None = Header(def
         "fun_url": fun_url,
         "car_url": car_url
     }
+
