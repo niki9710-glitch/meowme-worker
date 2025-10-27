@@ -1,4 +1,7 @@
 fastapi==0.115.0
-uvicorn==0.30.5
-yt-dlp==2024.10.07
-requests==2.32.3
+uvicorn==0.30.6
+httpx==0.27.2
+google-auth==2.35.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+google-api-python-client==2.149.0
